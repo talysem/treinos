@@ -20,6 +20,43 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
+// ---------- Tela de Configurações ----------
+let telaAnteriorConfig = 'screen-historico';
+
+document.querySelectorAll('.btn-config').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const telaAtual = btn.closest('.screen');
+    if (telaAtual) telaAnteriorConfig = telaAtual.id;
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-config').classList.add('active');
+  });
+});
+
+document.getElementById('btn-voltar-config').addEventListener('click', () => {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(telaAnteriorConfig).classList.add('active');
+});
+
+function aplicarCorPrimaria(cor) {
+  document.documentElement.style.setProperty('--primary', cor);
+}
+
+(function inicializarCorPrimaria() {
+  const inputCor = document.getElementById('input-cor-primaria');
+  const corSalva = getCorPrimaria();
+  const corPadrao = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+
+  inputCor.value = corSalva || corPadrao;
+  if (corSalva) aplicarCorPrimaria(corSalva);
+
+  inputCor.addEventListener('input', () => {
+    aplicarCorPrimaria(inputCor.value);
+  });
+  inputCor.addEventListener('change', () => {
+    saveCorPrimaria(inputCor.value);
+  });
+})();
+
 // ================= TREINOS =================
 let treinoEditandoId = null;
 let treinoDraft = null;
@@ -59,10 +96,19 @@ function criarCardTreinoView(treino) {
   card.innerHTML = `
     <div class="row-between">
       <h2>${escapeAttr(treino.nome)}</h2>
-      <button class="btn-secondary btn-editar-treino">editar</button>
+      <div class="treino-acoes">
+        <button class="btn-secondary btn-modo-foco" aria-label="modo foco">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg>
+        </button>
+        <button class="btn-secondary btn-editar-treino">editar</button>
+      </div>
     </div>
     ${resumoExercicios}
   `;
+
+  card.querySelector('.btn-modo-foco').addEventListener('click', () => {
+    abrirModoFoco(treino);
+  });
 
   card.querySelector('.btn-editar-treino').addEventListener('click', () => {
     treinoEditandoId = treino.id;
@@ -455,20 +501,33 @@ function renderListaSessoes(sessoes) {
 function criarItemSessaoView(sessoes, s) {
   const div = document.createElement('div');
   div.className = 'sessao-item';
-  const dataFmt = new Date(s.data).toLocaleString('pt-BR', {
-    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-  });
+  const d = new Date(s.data);
+  const dataFmt = d.toLocaleDateString('pt-BR');
+  const horaFmt = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const resumo = s.exercicios
     .map(e => `<div class="exercicio-resumo-linha">${escapeAttr(e.nome)}: ${e.pesosUsados.join('/')}kg</div>`)
     .join('');
-  const duracaoTxt = s.duracaoMinutos ? ` · ${s.duracaoMinutos} min` : '';
+  const duracaoTxt = s.duracaoMinutos ? `${s.duracaoMinutos} min` : '';
   div.innerHTML = `
-    <div class="data">${dataFmt} — ${escapeAttr(s.treinoNomeSnapshot)}${duracaoTxt}</div>
-    <div class="hint">${resumo}</div>
+    <div class="sessao-topo">
+      <div class="sessao-data-hora">
+        <div class="sessao-data-grande">${dataFmt}</div>
+        <div class="sessao-hora">${horaFmt}</div>
+      </div>
+      <div class="sessao-treino-tempo">
+        <div class="sessao-treino-nome">${escapeAttr(s.treinoNomeSnapshot)}</div>
+        ${duracaoTxt ? `<div class="sessao-duracao">${duracaoTxt}</div>` : ''}
+      </div>
+    </div>
+    <div class="sessao-exercicios">${resumo}</div>
     ${s.observacao ? `<div class="obs">"${escapeAttr(s.observacao)}"</div>` : ''}
-    <div class="sessao-actions">
-      <button class="btn-secondary btn-editar-sessao">editar</button>
-      <button class="btn-danger btn-apagar-sessao">apagar</button>
+    <div class="sessao-icones">
+      <button class="btn-icone btn-icone-editar btn-editar-sessao" aria-label="editar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+      </button>
+      <button class="btn-icone btn-icone-apagar btn-apagar-sessao" aria-label="apagar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+      </button>
     </div>
   `;
 
@@ -612,6 +671,60 @@ function escapeAttr(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
+
+// ---------- Modo foco ----------
+let wakeLock = null;
+
+async function solicitarWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch (err) {
+    console.warn('Wake Lock indisponível:', err);
+  }
+}
+
+function liberarWakeLock() {
+  if (wakeLock) {
+    wakeLock.release();
+    wakeLock = null;
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  const overlay = document.getElementById('modo-foco-overlay');
+  if (document.visibilityState === 'visible' && overlay && !overlay.classList.contains('hidden')) {
+    solicitarWakeLock();
+  }
+});
+
+function abrirModoFoco(treino) {
+  document.getElementById('modo-foco-titulo').textContent = treino.nome;
+
+  const lista = document.getElementById('modo-foco-lista');
+  lista.innerHTML = treino.exercicios.length === 0
+    ? '<p class="hint">Nenhum exercício cadastrado.</p>'
+    : treino.exercicios.map(ex => `
+        <div class="modo-foco-exercicio">
+          <div class="modo-foco-nome">${escapeAttr(ex.nome) || '(sem nome)'}</div>
+          ${ex.equipamento ? `<div class="modo-foco-detalhe">Equipamento: ${escapeAttr(ex.equipamento)}</div>` : ''}
+          <div class="modo-foco-detalhe">${ex.series}x${ex.reps}</div>
+          <div class="modo-foco-pesos">${ajustarArrayPesos(ex.pesosPadrao, ex.series).join(' / ')}kg</div>
+        </div>
+      `).join('');
+
+  document.getElementById('modo-foco-overlay').classList.remove('hidden');
+  solicitarWakeLock();
+}
+
+function fecharModoFoco() {
+  document.getElementById('modo-foco-overlay').classList.add('hidden');
+  liberarWakeLock();
+}
+
+document.getElementById('btn-sair-modo-foco').addEventListener('click', fecharModoFoco);
 
 // ---------- inicialização ----------
 renderHistorico();

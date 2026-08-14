@@ -1,5 +1,14 @@
 const KEY_CONFIG = 'treinos_config';
 const KEY_HISTORICO = 'historico_sessoes';
+const KEY_COR_PRIMARIA = 'cor_primaria';
+
+function getCorPrimaria() {
+  return localStorage.getItem(KEY_COR_PRIMARIA);
+}
+
+function saveCorPrimaria(cor) {
+  localStorage.setItem(KEY_COR_PRIMARIA, cor);
+}
 
 function uid(prefix) {
   return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -115,6 +124,7 @@ function exportarDados() {
   const data = {
     treinos_config: getConfig(),
     historico_sessoes: getHistorico(),
+    cor_primaria: getCorPrimaria(),
     exportadoEm: new Date().toISOString()
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -133,6 +143,7 @@ function importarDados(file, onDone) {
       const data = JSON.parse(e.target.result);
       if (data.treinos_config) saveConfig(data.treinos_config);
       if (data.historico_sessoes) saveHistorico(data.historico_sessoes);
+      if (data.cor_primaria) saveCorPrimaria(data.cor_primaria);
       onDone(true);
     } catch (err) {
       console.error('Falha ao importar', err);

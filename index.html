@@ -18,13 +18,17 @@
 
   <!-- HISTÓRICO -->
   <section id="screen-historico" class="screen active">
-    <h1>Histórico</h1>
-
-    <div class="card">
-      <h2>Progressão por exercício</h2>
-      <select id="filtro-exercicio"></select>
-      <canvas id="grafico" width="320" height="200"></canvas>
-      <p id="grafico-vazio" class="hint hidden">Sem dados suficientes para esse exercício.</p>
+    <div class="row-between">
+      <h1>Histórico</h1>
+      <button class="btn-config" aria-label="configurações">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
+        </svg>
+      </button>
     </div>
 
     <div class="card">
@@ -36,6 +40,13 @@
         <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
       </div>
       <div class="calendario-grid" id="calendario-grid"></div>
+    </div>
+
+    <div class="card">
+      <h2>Progressão por exercício</h2>
+      <select id="filtro-exercicio"></select>
+      <canvas id="grafico" width="320" height="200"></canvas>
+      <p id="grafico-vazio" class="hint hidden">Sem dados suficientes para esse exercício.</p>
     </div>
 
     <div class="card">
@@ -55,13 +66,35 @@
 
   <!-- TREINOS -->
   <section id="screen-treinos" class="screen">
-    <h1>Treinos</h1>
+    <div class="row-between">
+      <h1>Treinos</h1>
+      <button class="btn-config" aria-label="configurações">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
+        </svg>
+      </button>
+    </div>
     <div id="lista-treinos"></div>
   </section>
 
   <!-- REGISTRAR -->
   <section id="screen-registrar" class="screen">
-    <h1>Registrar</h1>
+    <div class="row-between">
+      <h1>Registrar</h1>
+      <button class="btn-config" aria-label="configurações">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
+        </svg>
+      </button>
+    </div>
     <div class="card">
       <label>Treino realizado</label>
       <select id="select-treino-registrar"></select>
@@ -82,6 +115,33 @@
       <p id="msg-sessao-salva" class="hint hidden">Sessão salva!</p>
     </div>
   </section>
+
+  <!-- CONFIGURAÇÕES -->
+  <section id="screen-config" class="screen">
+    <div class="row-between">
+      <h1>Configurações</h1>
+      <button id="btn-voltar-config" class="btn-secondary">Voltar</button>
+    </div>
+    <div class="card">
+      <label>Cor primária</label>
+      <input type="color" id="input-cor-primaria">
+    </div>
+  </section>
+
+  <!-- MODO FOCO -->
+  <div id="modo-foco-overlay" class="modo-foco hidden">
+    <div class="modo-foco-topo">
+      <h1 id="modo-foco-titulo"></h1>
+      <button id="btn-sair-modo-foco" class="btn-fechar-overlay" aria-label="fechar modo foco">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div id="modo-foco-lista" class="modo-foco-lista"></div>
+  </div>
 
   <script src="js/storage.js"></script>
   <script src="js/chart.js"></script>

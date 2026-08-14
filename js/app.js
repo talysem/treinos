@@ -43,8 +43,9 @@ function aplicarCorPrimaria(cor) {
 
 (function inicializarCorPrimaria() {
   const inputCor = document.getElementById('input-cor-primaria');
-  const corSalva = getCorPrimaria();
+  const btnResetar = document.getElementById('btn-resetar-cor');
   const corPadrao = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+  const corSalva = getCorPrimaria();
 
   inputCor.value = corSalva || corPadrao;
   if (corSalva) aplicarCorPrimaria(corSalva);
@@ -54,6 +55,12 @@ function aplicarCorPrimaria(cor) {
   });
   inputCor.addEventListener('change', () => {
     saveCorPrimaria(inputCor.value);
+  });
+
+  btnResetar?.addEventListener('click', () => {
+    document.documentElement.style.removeProperty('--primary');
+    limparCorPrimaria();
+    inputCor.value = corPadrao;
   });
 })();
 
@@ -76,6 +83,17 @@ function renderTreinos() {
       : criarCardTreinoView(treino);
     container.appendChild(card);
   });
+
+  const btnAddTreino = document.createElement('button');
+  btnAddTreino.className = 'btn-add';
+  btnAddTreino.textContent = '+ adicionar treino';
+  btnAddTreino.addEventListener('click', () => {
+    const letra = String.fromCharCode(65 + config.treinos.length);
+    config.treinos.push({ id: uid('treino'), nome: 'Treino ' + letra, exercicios: [] });
+    saveConfig(config);
+    renderTreinos();
+  });
+  container.appendChild(btnAddTreino);
 }
 
 function criarCardTreinoView(treino) {
@@ -100,7 +118,8 @@ function criarCardTreinoView(treino) {
         <button class="btn-secondary btn-modo-foco" aria-label="modo foco">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg>
         </button>
-        <button class="btn-secondary btn-editar-treino">editar</button>
+        <button class="btn-secondary btn-editar-treino">Editar</button>
+        <button class="btn-danger btn-excluir-treino">Excluir</button>
       </div>
     </div>
     ${resumoExercicios}
@@ -108,6 +127,15 @@ function criarCardTreinoView(treino) {
 
   card.querySelector('.btn-modo-foco').addEventListener('click', () => {
     abrirModoFoco(treino);
+  });
+
+  card.querySelector('.btn-excluir-treino').addEventListener('click', () => {
+    if (!confirm(`Excluir "${treino.nome}"? Isso remove o treino, mas o histórico de sessões já registradas continua intacto.`)) return;
+    const config = getConfig();
+    const idx = config.treinos.findIndex(t => t.id === treino.id);
+    config.treinos.splice(idx, 1);
+    saveConfig(config);
+    renderTreinos();
   });
 
   card.querySelector('.btn-editar-treino').addEventListener('click', () => {
@@ -152,8 +180,8 @@ function criarCardTreinoEdit(config, draft) {
   const acoes = document.createElement('div');
   acoes.className = 'sessao-actions';
   acoes.innerHTML = `
-    <button class="btn-primary btn-salvar-treino">salvar</button>
-    <button class="btn-secondary btn-cancelar-treino">cancelar</button>
+    <button class="btn-primary btn-salvar-treino">Salvar</button>
+    <button class="btn-secondary btn-cancelar-treino">Cancelar</button>
   `;
   card.appendChild(acoes);
 
@@ -244,14 +272,17 @@ function renderRegistrar() {
   select.onchange = () => renderFormExerciciosRegistrar(config, select.value);
   renderFormExerciciosRegistrar(config, select.value);
 
-  const checkData = document.getElementById('check-data-especifica');
+  const checkAgora = document.getElementById('check-data-hoje');
+  const grupoData = document.getElementById('grupo-data-especifica');
   const inputData = document.getElementById('input-data-especifica');
-  checkData.checked = false;
-  inputData.classList.add('hidden');
+
+  checkAgora.checked = true;
+  grupoData.classList.add('hidden');
   inputData.value = '';
-  checkData.onchange = () => {
-    inputData.classList.toggle('hidden', !checkData.checked);
-    if (checkData.checked && !inputData.value) {
+
+  checkAgora.onchange = () => {
+    grupoData.classList.toggle('hidden', checkAgora.checked);
+    if (!checkAgora.checked && !inputData.value) {
       inputData.value = toDatetimeLocalValue(new Date().toISOString());
     }
   };
@@ -290,15 +321,22 @@ function renderFormExerciciosRegistrar(config, treinoId) {
     row.dataset.exIdx = exIdx;
     row.innerHTML = `
       <div class="row-between">
-        <div class="nome-ex">${escapeAttr(estado.nome) || '(sem nome)'}</div>
-        <select class="reg-realizado">
-          <option value="sim">Realizado</option>
-          <option value="nao">Não realizado</option>
-        </select>
+        <div class="nome-ex-grande">${escapeAttr(estado.nome) || '(sem nome)'}</div>
+        <div class="realizado-toggle-wrap">
+          <label for="realizado-${exIdx}" class="hint snd-font">Realizado?</label>
+          <label class="switch-input" for="realizado-${exIdx}">
+            <input type="checkbox" id="realizado-${exIdx}" class="reg-realizado" checked>
+            <div>
+              <svg width="9" height="7" viewBox="0 0 9 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8.59094 0.76737L3.32367 6.03464L0 2.71097L0.76737 1.9436L3.32367 4.4999L7.82357 0L8.59094 0.76737Z" fill="white" />
+              </svg>
+            </div>
+          </label>
+        </div>
       </div>
       <div class="equip-hint">${estado.equipamento ? 'Equipamento: ' + escapeAttr(estado.equipamento) : ''}</div>
-      <div class="campos-realizado">
-        <div class="grid-3">
+      <div class="campos-realizado full-width">
+        <div class="grid-2">
           <div>
             <label>Séries</label>
             <input type="number" min="1" value="${estado.series}" class="reg-series">
@@ -307,9 +345,8 @@ function renderFormExerciciosRegistrar(config, treinoId) {
             <label>Reps</label>
             <input type="number" min="1" value="${estado.reps}" class="reg-reps">
           </div>
-          <div></div>
         </div>
-        <label>Peso usado por série (kg)</label>
+        <label>Pesos usados:</label>
         <div class="pesos-serie-row"></div>
       </div>
     `;
@@ -328,7 +365,7 @@ function renderFormExerciciosRegistrar(config, treinoId) {
     renderPesosUsados();
 
     row.querySelector('.reg-realizado').addEventListener('change', e => {
-      estado.realizado = e.target.value === 'sim';
+      estado.realizado = e.target.checked;
       camposRealizado.classList.toggle('hidden', !estado.realizado);
       row.classList.toggle('exercicio-nao-realizado', !estado.realizado);
     });
@@ -365,9 +402,9 @@ function salvarSessao(config, treinoId) {
     return;
   }
 
-  const checkData = document.getElementById('check-data-especifica');
+  const checkAgora = document.getElementById('check-data-hoje');
   const inputData = document.getElementById('input-data-especifica');
-  const dataSessao = (checkData.checked && inputData.value)
+  const dataSessao = (!checkAgora.checked && inputData.value)
     ? new Date(inputData.value).toISOString()
     : new Date().toISOString();
 
@@ -387,8 +424,8 @@ function salvarSessao(config, treinoId) {
 
   document.getElementById('observacao-sessao').value = '';
   document.getElementById('input-duracao').value = '';
-  checkData.checked = false;
-  inputData.classList.add('hidden');
+  checkAgora.checked = true;
+  document.getElementById('grupo-data-especifica').classList.add('hidden');
   inputData.value = '';
   document.getElementById('msg-sessao-salva').classList.remove('hidden');
 }
@@ -567,8 +604,8 @@ function criarItemSessaoEdit(sessoes, s) {
     <label>Observação</label>
     <textarea rows="2" class="edit-observacao">${escapeAttr(s.observacao)}</textarea>
     <div class="sessao-actions">
-      <button class="btn-primary btn-salvar-edicao">salvar</button>
-      <button class="btn-secondary btn-cancelar-edicao">cancelar</button>
+      <button class="btn-primary btn-salvar-edicao">Salvar</button>
+      <button class="btn-secondary btn-cancelar-edicao">Cancelar</button>
     </div>
   `;
 

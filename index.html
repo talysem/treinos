@@ -106,22 +106,49 @@
       </button>
     </div>
     <div class="card">
-      <label>Treino realizado</label>
-      <select id="select-treino-registrar"></select>
 
-      <label class="checkbox-label">
-        <input type="checkbox" id="check-data-especifica">
-        Definir data/horário específico
-      </label>
-      <input type="datetime-local" id="input-data-especifica" class="hidden">
+      <div class="register-group" id="registr-type">
+        <label class="snd-font">Treino realizado:</label>
+        <select id="select-treino-registrar"></select>
+      </div>
 
-      <label>Duração do treino (minutos)</label>
-      <input type="number" id="input-duracao" min="0" placeholder="Ex: 60">
+      <div class="register-group">
+        <h2 class="snd-font">Quando e duração</h2>
 
-      <div id="form-exercicios-registrar"></div>
-      <label>Observação</label>
+        <div class="row spc-btwn">
+          <label for="check-data-hoje" class="snd-font">Treino realizado agora?</label>
+
+          <label class="switch-input" for="check-data-hoje">
+            <input type="checkbox" id="check-data-hoje" checked>
+            <div>
+              <svg width="9" height="7" viewBox="0 0 9 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M8.59094 0.76737L3.32367 6.03464L0 2.71097L0.76737 1.9436L3.32367 4.4999L7.82357 0L8.59094 0.76737Z"
+                  fill="white" />
+              </svg>
+            </div>
+          </label>
+        </div>
+
+        <div id="grupo-data-especifica" class="hidden full-width">
+          <label class="snd-font">Quando realizou?</label>
+          <input type="datetime-local" id="input-data-especifica">
+        </div>
+
+        <div class="full-width">
+          <label class="snd-font">Duração (minutos):</label>
+          <input type="number" id="input-duracao" min="0" placeholder="Ex.: 60">
+        </div>
+      </div>
+
+      <div class="register-group">
+        <h2 class="snd-font">Treinos</h2>
+        <div id="form-exercicios-registrar" class="full-width"></div>
+      </div>
+
+      <label>Observação:</label>
       <textarea id="observacao-sessao" rows="3" placeholder="Como foi o treino?"></textarea>
-      <button id="btn-salvar-sessao" class="btn-primary">Salvar sessão</button>
+      <button id="btn-salvar-sessao" class="btn-primary">Registrar sessão</button>
       <p id="msg-sessao-salva" class="hint hidden">Sessão salva!</p>
     </div>
   </section>
@@ -135,6 +162,7 @@
     <div class="card">
       <label>Cor primária</label>
       <input type="color" id="input-cor-primaria">
+      <button id="btn-resetar-cor" class="btn-secondary">Restaurar padrão</button>
     </div>
   </section>
 

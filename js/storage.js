@@ -10,6 +10,10 @@ function saveCorPrimaria(cor) {
   localStorage.setItem(KEY_COR_PRIMARIA, cor);
 }
 
+function limparCorPrimaria() {
+  localStorage.removeItem(KEY_COR_PRIMARIA);
+}
+
 function uid(prefix) {
   return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }

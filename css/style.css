@@ -104,7 +104,7 @@ body {
 .row-between {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
 }
 
 label {
@@ -134,9 +134,13 @@ input[type="datetime-local"] {
   font-size: 14px;
 }
 
+#form-exercicios-registrar {
+  display: flex;
+  flex-flow: column;
+  gap: 20px;
+}
+
 .exercicio-row {
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
   margin-top: 10px;
 }
 

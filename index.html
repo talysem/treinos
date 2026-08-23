@@ -41,22 +41,35 @@
       </button>
     </div>
 
-    <div class="card">
-      <div class="row-between">
-        <h2>Calendário</h2>
-        <span id="calendario-mes" class="hint"></span>
+    <div id="historico-analises">
+      <div class="card">
+        <div class="row-between">
+          <h2>Calendário</h2>
+          <span id="calendario-mes" class="hint"></span>
+        </div>
+        <div class="calendario-header-row">
+          <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+        </div>
+        <div class="calendario-grid" id="calendario-grid"></div>
       </div>
-      <div class="calendario-header-row">
-        <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
-      </div>
-      <div class="calendario-grid" id="calendario-grid"></div>
-    </div>
 
-    <div class="card">
-      <h2>Progressão por exercício</h2>
-      <select id="filtro-exercicio"></select>
-      <canvas id="grafico" width="320" height="200"></canvas>
-      <p id="grafico-vazio" class="hint hidden">Sem dados suficientes para esse exercício.</p>
+      <div class="card">
+        <h2>Estatísticas</h2>
+        <div id="estatisticas-lista" class="stats-lista"></div>
+      </div>
+
+      <div class="card">
+        <h2>Distribuição</h2>
+        <div id="distribuicao-treino" class="dist-grupo"></div>
+        <div id="distribuicao-dia-semana" class="dist-grupo"></div>
+      </div>
+
+      <div class="card">
+        <h2>Progressão por exercício</h2>
+        <select id="filtro-exercicio"></select>
+        <canvas id="grafico" width="320" height="200"></canvas>
+        <p id="grafico-vazio" class="hint hidden">Sem dados suficientes para esse exercício.</p>
+      </div>
     </div>
 
     <div class="card">
@@ -183,6 +196,7 @@
 
   <script src="js/storage.js"></script>
   <script src="js/chart.js"></script>
+  <script src="js/analytics.js"></script>
   <script src="js/app.js"></script>
 </body>
 

@@ -74,13 +74,16 @@ function clonar(obj) {
 
 function renderTreinos() {
   const config = getConfig();
+  const sessoes = getHistorico();
+  const { recordes } = calcularRecordes(sessoes);
+  const ultimoPorTipo = calcularUltimoTreinoPorTipo(sessoes);
   const container = document.getElementById('lista-treinos');
   container.innerHTML = '';
 
   config.treinos.forEach(treino => {
     const card = (treino.id === treinoEditandoId)
       ? criarCardTreinoEdit(config, treinoDraft)
-      : criarCardTreinoView(treino);
+      : criarCardTreinoView(treino, recordes, ultimoPorTipo);
     container.appendChild(card);
   });
 
@@ -96,20 +99,26 @@ function renderTreinos() {
   container.appendChild(btnAddTreino);
 }
 
-function criarCardTreinoView(treino) {
+function criarCardTreinoView(treino, recordes, ultimoPorTipo) {
   const card = document.createElement('div');
   card.className = 'card';
 
   const resumoExercicios = treino.exercicios.length === 0
     ? '<p class="hint">Nenhum exercício cadastrado.</p>'
-    : treino.exercicios.map(ex => `
+    : treino.exercicios.map(ex => {
+        const recorde = recordes && recordes[ex.nome];
+        return `
         <div class="exercicio-resumo">
           <div class="nome-ex">${escapeAttr(ex.nome) || '(sem nome)'}</div>
           <div class="hint">
-            ${ex.equipamento ? escapeAttr(ex.equipamento) + ' · ' : ''}${ex.series}x${ex.reps} · ${ajustarArrayPesos(ex.pesosPadrao, ex.series).join('/')}kg
+            ${ex.equipamento ? escapeAttr(ex.equipamento) + ' · ' : ''}${ex.series}x${ex.reps} · ${ajustarArrayPesos(ex.pesosPadrao, ex.series).join('/')}kg${recorde ? ` · PR: ${recorde.peso}kg` : ''}
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
+
+  const ultimaData = ultimoPorTipo && ultimoPorTipo[treino.id];
+  const ultimoTxt = ultimaData ? `Último treino: ${calcularTempoDesde(ultimaData)}` : 'Ainda não realizado';
 
   card.innerHTML = `
     <div class="row-between">
@@ -122,6 +131,7 @@ function criarCardTreinoView(treino) {
         <button class="btn-danger btn-excluir-treino">Excluir</button>
       </div>
     </div>
+    <div class="hint">${ultimoTxt}</div>
     ${resumoExercicios}
   `;
 
@@ -433,9 +443,80 @@ function salvarSessao(config, treinoId) {
 // ================= HISTÓRICO =================
 function renderHistorico() {
   const sessoes = getHistorico();
-  renderCalendario(sessoes);
-  renderFiltroExercicio(sessoes);
+  const blocoAnalises = document.getElementById('historico-analises');
+
+  blocoAnalises.classList.toggle('hidden', sessoes.length === 0);
+
+  if (sessoes.length > 0) {
+    renderCalendario(sessoes);
+    renderEstatisticas(sessoes);
+    renderDistribuicao(sessoes);
+    renderFiltroExercicio(sessoes);
+  }
+
   renderListaSessoes(sessoes);
+}
+
+function renderEstatisticas(sessoes) {
+  const container = document.getElementById('estatisticas-lista');
+
+  if (sessoes.length === 0) {
+    container.innerHTML = '<p class="hint">Sem sessões registradas ainda.</p>';
+    return;
+  }
+
+  const freq = calcularFrequencia(sessoes);
+  const duracaoMedia = calcularDuracaoMedia(sessoes);
+  const ultima = [...sessoes].sort((a, b) => new Date(b.data) - new Date(a.data))[0];
+  const tempoDesde = calcularTempoDesde(ultima.data);
+
+  const stats = [
+    { label: 'Último treino', valor: tempoDesde },
+    { label: 'Sequência atual', valor: freq.streakAtual > 0 ? `${freq.streakAtual} dias` : '—' },
+    { label: 'Maior sequência', valor: `${freq.maiorStreak} dias` },
+    { label: `Dias treinados em ${NOMES_MESES[new Date().getMonth()]}`, valor: `${freq.diasTreinadosMes} (${freq.percentualMes}%)` },
+    { label: 'Duração média', valor: duracaoMedia > 0 ? `${duracaoMedia} min` : '—' }
+  ];
+
+  container.innerHTML = stats.map(s => `
+    <div class="stat-linha">
+      <span class="stat-label">${s.label}</span>
+      <span class="stat-valor">${s.valor}</span>
+    </div>
+  `).join('');
+}
+
+function renderDistribuicao(sessoes) {
+  const grupoTreino = document.getElementById('distribuicao-treino');
+  const grupoDiaSemana = document.getElementById('distribuicao-dia-semana');
+
+  if (sessoes.length === 0) {
+    grupoTreino.innerHTML = '';
+    grupoDiaSemana.innerHTML = '<p class="hint">Sem sessões registradas ainda.</p>';
+    return;
+  }
+
+  const porTreino = calcularDistribuicaoTreino(sessoes);
+  const maxTreino = Math.max(...Object.values(porTreino));
+  grupoTreino.innerHTML = '<div class="dist-titulo hint">Por treino</div>' +
+    Object.entries(porTreino).map(([nome, qtd]) => `
+      <div class="dist-barra-linha">
+        <span class="dist-nome">${escapeAttr(nome)}</span>
+        <div class="dist-barra-fundo"><div class="dist-barra-preenchida" style="width:${(qtd / maxTreino) * 100}%"></div></div>
+        <span class="dist-qtd">${qtd}x</span>
+      </div>
+    `).join('');
+
+  const porDiaSemana = calcularDistribuicaoDiaSemana(sessoes);
+  const maxDia = Math.max(...porDiaSemana, 1);
+  grupoDiaSemana.innerHTML = '<div class="dist-titulo hint">Por dia da semana</div>' +
+    NOMES_DIAS_SEMANA.map((nome, i) => `
+      <div class="dist-barra-linha">
+        <span class="dist-nome">${nome}</span>
+        <div class="dist-barra-fundo"><div class="dist-barra-preenchida" style="width:${(porDiaSemana[i] / maxDia) * 100}%"></div></div>
+        <span class="dist-qtd">${porDiaSemana[i]}x</span>
+      </div>
+    `).join('');
 }
 
 const NOMES_MESES = [
@@ -510,9 +591,13 @@ function atualizarGrafico(sessoes, nomeExercicio) {
     .sort((a, b) => new Date(a.data) - new Date(b.data))
     .slice(-5);
 
-  const desenhado = desenharGrafico(canvas, pontos);
-  canvas.classList.toggle('hidden', !desenhado);
-  vazio.classList.toggle('hidden', desenhado);
+  const temDadosSuficientes = pontos.length >= 2;
+  canvas.classList.toggle('hidden', !temDadosSuficientes);
+  vazio.classList.toggle('hidden', temDadosSuficientes);
+
+  if (temDadosSuficientes) {
+    desenharGrafico(canvas, pontos);
+  }
 }
 
 window.addEventListener('resize', () => {
@@ -524,27 +609,42 @@ function renderListaSessoes(sessoes) {
   container.innerHTML = '';
 
   if (sessoes.length === 0) {
-    container.innerHTML = '<p class="hint">Nenhuma sessão registrada ainda.</p>';
+    container.innerHTML = `
+      <div class="estado-vazio">
+        <p class="hint">Nenhuma sessão registrada ainda. Assim que você registrar seu primeiro treino, o calendário, as estatísticas e os gráficos de progressão aparecem aqui automaticamente.</p>
+        <p class="hint">Já tem um backup? Use "Importar" acima pra restaurar seu histórico.</p>
+        <button class="btn-primary btn-ir-registrar">Registrar primeiro treino</button>
+      </div>
+    `;
+    container.querySelector('.btn-ir-registrar').addEventListener('click', () => {
+      document.querySelector('.tab-btn[data-screen="registrar"]').click();
+    });
     return;
   }
 
   const ordenadas = [...sessoes].sort((a, b) => new Date(b.data) - new Date(a.data));
+  const { prPorSessao } = calcularRecordes(sessoes);
 
   ordenadas.forEach(s => {
-    container.appendChild(criarItemSessaoView(sessoes, s));
+    container.appendChild(criarItemSessaoView(sessoes, s, prPorSessao));
   });
 }
 
-function criarItemSessaoView(sessoes, s) {
+function criarItemSessaoView(sessoes, s, prPorSessao) {
   const div = document.createElement('div');
   div.className = 'sessao-item';
   const d = new Date(s.data);
   const dataFmt = d.toLocaleDateString('pt-BR');
   const horaFmt = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const prsDaSessao = (prPorSessao && prPorSessao[s.id]) || new Set();
   const resumo = s.exercicios
-    .map(e => `<div class="exercicio-resumo-linha">${escapeAttr(e.nome)}: ${e.pesosUsados.join('/')}kg</div>`)
+    .map(e => {
+      const badge = prsDaSessao.has(e.nome) ? '<span class="badge-pr">🏆 PR</span>' : '';
+      return `<div class="exercicio-resumo-linha">${escapeAttr(e.nome)}: ${e.pesosUsados.join('/')}kg ${badge}</div>`;
+    })
     .join('');
   const duracaoTxt = s.duracaoMinutos ? `${s.duracaoMinutos} min` : '';
+  const volume = calcularVolumeSessao(s);
   div.innerHTML = `
     <div class="sessao-topo">
       <div class="sessao-data-hora">
@@ -556,6 +656,7 @@ function criarItemSessaoView(sessoes, s) {
         ${duracaoTxt ? `<div class="sessao-duracao">${duracaoTxt}</div>` : ''}
       </div>
     </div>
+    <div class="sessao-volume hint">Volume: ${volume.toLocaleString('pt-BR')}kg</div>
     <div class="sessao-exercicios">${resumo}</div>
     ${s.observacao ? `<div class="obs">"${escapeAttr(s.observacao)}"</div>` : ''}
     <div class="sessao-icones">
@@ -656,7 +757,8 @@ function criarItemSessaoEdit(sessoes, s) {
   });
 
   div.querySelector('.btn-cancelar-edicao').addEventListener('click', () => {
-    div.replaceWith(criarItemSessaoView(sessoes, s));
+    const { prPorSessao } = calcularRecordes(sessoes);
+    div.replaceWith(criarItemSessaoView(sessoes, s, prPorSessao));
   });
 
   div.querySelector('.btn-salvar-edicao').addEventListener('click', () => {
@@ -740,17 +842,23 @@ document.addEventListener('visibilitychange', () => {
 function abrirModoFoco(treino) {
   document.getElementById('modo-foco-titulo').textContent = treino.nome;
 
+  const { recordes } = calcularRecordes(getHistorico());
+
   const lista = document.getElementById('modo-foco-lista');
   lista.innerHTML = treino.exercicios.length === 0
     ? '<p class="hint">Nenhum exercício cadastrado.</p>'
-    : treino.exercicios.map(ex => `
+    : treino.exercicios.map(ex => {
+        const recorde = recordes[ex.nome];
+        return `
         <div class="modo-foco-exercicio">
           <div class="modo-foco-nome">${escapeAttr(ex.nome) || '(sem nome)'}</div>
           ${ex.equipamento ? `<div class="modo-foco-detalhe">Equipamento: ${escapeAttr(ex.equipamento)}</div>` : ''}
           <div class="modo-foco-detalhe">${ex.series}x${ex.reps}</div>
           <div class="modo-foco-pesos">${ajustarArrayPesos(ex.pesosPadrao, ex.series).join(' / ')}kg</div>
+          ${recorde ? `<div class="modo-foco-pr">🏆 PR: ${recorde.peso}kg</div>` : ''}
         </div>
-      `).join('');
+      `;
+      }).join('');
 
   document.getElementById('modo-foco-overlay').classList.remove('hidden');
   solicitarWakeLock();

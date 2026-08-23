@@ -559,17 +559,33 @@ function renderCalendario(sessoes) {
 }
 
 function renderFiltroExercicio(sessoes) {
-  const nomesUnicos = [...new Set(
-    sessoes.flatMap(s => s.exercicios.map(e => e.nome)).filter(Boolean)
-  )];
+  const contagemPorExercicio = {};
+  sessoes.forEach(s => {
+    s.exercicios.forEach(e => {
+      if (!e.nome) return;
+      contagemPorExercicio[e.nome] = (contagemPorExercicio[e.nome] || 0) + 1;
+    });
+  });
 
+  const nomesComDadosSuficientes = Object.keys(contagemPorExercicio)
+    .filter(nome => contagemPorExercicio[nome] >= 2)
+    .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  const card = document.getElementById('card-progressao');
   const select = document.getElementById('filtro-exercicio');
+
+  if (nomesComDadosSuficientes.length === 0) {
+    card.classList.add('hidden');
+    return;
+  }
+  card.classList.remove('hidden');
+
   const atual = select.value;
-  select.innerHTML = nomesUnicos.map(n => `<option value="${escapeAttr(n)}">${n}</option>`).join('');
-  if (nomesUnicos.includes(atual)) select.value = atual;
+  select.innerHTML = nomesComDadosSuficientes.map(n => `<option value="${escapeAttr(n)}">${n}</option>`).join('');
+  if (nomesComDadosSuficientes.includes(atual)) select.value = atual;
 
   select.onchange = () => atualizarGrafico(sessoes, select.value);
-  if (nomesUnicos.length > 0) atualizarGrafico(sessoes, select.value);
+  atualizarGrafico(sessoes, select.value);
 }
 
 let ultimoGraficoSessoes = null;

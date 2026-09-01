@@ -14,6 +14,17 @@ function limparCorPrimaria() {
   localStorage.removeItem(KEY_COR_PRIMARIA);
 }
 
+const KEY_META_SEMANAL = 'meta_semanal';
+
+function getMetaSemanal() {
+  const valor = Number(localStorage.getItem(KEY_META_SEMANAL));
+  return valor > 0 ? valor : 3;
+}
+
+function saveMetaSemanal(valor) {
+  localStorage.setItem(KEY_META_SEMANAL, String(valor));
+}
+
 function uid(prefix) {
   return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
@@ -129,6 +140,7 @@ function exportarDados() {
     treinos_config: getConfig(),
     historico_sessoes: getHistorico(),
     cor_primaria: getCorPrimaria(),
+    meta_semanal: getMetaSemanal(),
     exportadoEm: new Date().toISOString()
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -148,6 +160,7 @@ function importarDados(file, onDone) {
       if (data.treinos_config) saveConfig(data.treinos_config);
       if (data.historico_sessoes) saveHistorico(data.historico_sessoes);
       if (data.cor_primaria) saveCorPrimaria(data.cor_primaria);
+      if (data.meta_semanal) saveMetaSemanal(data.meta_semanal);
       onDone(true);
     } catch (err) {
       console.error('Falha ao importar', err);

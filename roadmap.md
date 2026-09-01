@@ -34,6 +34,14 @@ Dados que ainda não existem no app e que ajudariam no planejamento dos treinos:
 - Idade/altura, se algum cálculo (ex: 1RM estimado, TDEE) fizer sentido depois.
 - Onde salvar: provavelmente uma nova chave no localStorage (`dados_pessoais`), separada de `treinos_config` e `historico_sessoes`, seguindo o padrão de storage.js.
 
+### Migrar de localStorage para servidor
+Hoje os dados vivem só no navegador do usuário (localStorage), sem sincronização entre aparelhos. Migrar pra um backend com banco de dados:
+- **O que já ajuda**: acesso a dado já passa por funções isoladas em `storage.js` (`getConfig`, `saveConfig`, `getHistorico`, `saveHistorico`, `getCorPrimaria`, etc) — a lógica de negócio (analytics, chart, boa parte do app.js) não depende de como o dado é persistido.
+- **O que precisa ser construído**: um backend (API REST) e um banco (SQLite pra começar, sem servidor de banco separado).
+- **O que precisa mudar no front**: cada função de `storage.js` passa de leitura síncrona do localStorage pra chamada assíncrona (`fetch`) — isso é a parte mais espalhada, já que o código que consome essas funções hoje é síncrono e precisa virar `async/await` em vários pontos do `app.js`.
+- **Autenticação**: hoje não existe usuário — é "seu navegador = seus dados". Multiusuário real pede login/sessão; dá pra adiar isso com uma chave de acesso simples no início.
+- **Abordagem sugerida** (pensando em usar isso como estudo de backend): começar com um único endpoint de sync (recebe/devolve o JSON inteiro, no mesmo formato do "Exportar" atual) antes de quebrar em endpoints por recurso (treinos, sessões) e só depois mexer em autenticação.
+
 ---
 
 *Este arquivo é só um apontador de direção — não é uma spec fechada. Cada item aqui vira uma conversa própria quando for a hora de implementar.*

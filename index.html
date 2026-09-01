@@ -154,9 +154,17 @@
         </div>
       </div>
 
-      <div class="register-group">
+      <div class="register-group" id="grupo-treino-normal">
         <h2 class="snd-font">Treinos</h2>
         <div id="form-exercicios-registrar" class="full-width"></div>
+      </div>
+
+      <div class="register-group hidden" id="grupo-avulso">
+        <h2 class="snd-font">Treino avulso</h2>
+        <label>Nome do treino (opcional):</label>
+        <input type="text" id="input-nome-avulso" placeholder="Ex.: Treino com o Fulano">
+        <div id="form-exercicios-avulso" class="full-width"></div>
+        <button type="button" class="btn-add" id="btn-add-exercicio-avulso">+ adicionar exercício</button>
       </div>
 
       <label>Observação:</label>
@@ -176,6 +184,11 @@
       <label>Cor primária</label>
       <input type="color" id="input-cor-primaria">
       <button id="btn-resetar-cor" class="btn-secondary">Restaurar padrão</button>
+    </div>
+
+    <div class="card">
+      <label>Meta semanal de treinos</label>
+      <input type="number" id="input-meta-semanal" min="1" placeholder="Ex.: 3">
     </div>
   </section>
 
@@ -197,6 +210,7 @@
   <script src="js/storage.js"></script>
   <script src="js/chart.js"></script>
   <script src="js/analytics.js"></script>
+  <script src="js/share.js"></script>
   <script src="js/app.js"></script>
 </body>
 

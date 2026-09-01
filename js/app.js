@@ -64,6 +64,19 @@ function aplicarCorPrimaria(cor) {
   });
 })();
 
+(function inicializarMetaSemanal() {
+  const inputMeta = document.getElementById('input-meta-semanal');
+  if (!inputMeta) return;
+
+  inputMeta.value = getMetaSemanal();
+
+  inputMeta.addEventListener('change', () => {
+    const valor = Math.max(1, Number(inputMeta.value) || 1);
+    inputMeta.value = valor;
+    saveMetaSemanal(valor);
+  });
+})();
+
 // ================= TREINOS =================
 let treinoEditandoId = null;
 let treinoDraft = null;
@@ -275,12 +288,16 @@ function criarLinhaExercicioEdit(draft, ex, idx, onRemover) {
 }
 
 // ================= REGISTRAR =================
+const VALOR_AVULSO = '__avulso__';
+
 function renderRegistrar() {
   const config = getConfig();
   const select = document.getElementById('select-treino-registrar');
-  select.innerHTML = config.treinos.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
-  select.onchange = () => renderFormExerciciosRegistrar(config, select.value);
-  renderFormExerciciosRegistrar(config, select.value);
+  select.innerHTML = config.treinos.map(t => `<option value="${t.id}">${t.nome}</option>`).join('')
+    + `<option value="${VALOR_AVULSO}">Treino avulso (não salvo)</option>`;
+
+  select.onchange = () => alternarModoRegistro(config, select.value);
+  alternarModoRegistro(config, select.value);
 
   const checkAgora = document.getElementById('check-data-hoje');
   const grupoData = document.getElementById('grupo-data-especifica');
@@ -298,8 +315,107 @@ function renderRegistrar() {
   };
 
   document.getElementById('input-duracao').value = '';
+  document.getElementById('input-nome-avulso').value = '';
 
   document.getElementById('btn-salvar-sessao').onclick = () => salvarSessao(config, select.value);
+}
+
+function alternarModoRegistro(config, valorSelecionado) {
+  const grupoNormal = document.getElementById('grupo-treino-normal');
+  const grupoAvulso = document.getElementById('grupo-avulso');
+  const ehAvulso = valorSelecionado === VALOR_AVULSO;
+
+  grupoNormal.classList.toggle('hidden', ehAvulso);
+  grupoAvulso.classList.toggle('hidden', !ehAvulso);
+
+  if (ehAvulso) {
+    renderFormAvulso();
+  } else {
+    renderFormExerciciosRegistrar(config, valorSelecionado);
+  }
+}
+
+// ---------- Treino avulso ----------
+let avulsoExercicios = [];
+
+function renderFormAvulso() {
+  avulsoExercicios = [];
+  const container = document.getElementById('form-exercicios-avulso');
+  container.innerHTML = '';
+
+  document.getElementById('btn-add-exercicio-avulso').onclick = () => {
+    avulsoExercicios.push({ nome: '', equipamento: '', series: 3, reps: 10, pesosUsados: [0, 0, 0] });
+    renderListaAvulso();
+  };
+
+  renderListaAvulso();
+}
+
+function renderListaAvulso() {
+  const container = document.getElementById('form-exercicios-avulso');
+  container.innerHTML = '';
+
+  if (avulsoExercicios.length === 0) {
+    container.innerHTML = '<p class="hint">Nenhum exercício adicionado ainda.</p>';
+    return;
+  }
+
+  avulsoExercicios.forEach((estado, idx) => {
+    container.appendChild(criarLinhaExercicioAvulso(estado, idx));
+  });
+}
+
+function criarLinhaExercicioAvulso(estado, idx) {
+  const row = document.createElement('div');
+  row.className = 'exercicio-row';
+
+  row.innerHTML = `
+    <div class="row-between">
+      <input type="text" placeholder="Nome do exercício" value="${escapeAttr(estado.nome)}" class="av-nome">
+      <button type="button" class="btn-danger" style="margin-left:8px">Remover</button>
+    </div>
+    <label>Equipamento (opcional):</label>
+    <input type="text" placeholder="Ex: Máquina 12" value="${escapeAttr(estado.equipamento)}" class="av-equip">
+    <div class="grid-2">
+      <div>
+        <label>Séries</label>
+        <input type="number" min="1" value="${estado.series}" class="av-series">
+      </div>
+      <div>
+        <label>Reps</label>
+        <input type="number" min="1" value="${estado.reps}" class="av-reps">
+      </div>
+    </div>
+    <label>Pesos usados:</label>
+    <div class="pesos-serie-row"></div>
+  `;
+
+  const pesosContainer = row.querySelector('.pesos-serie-row');
+
+  function renderPesos() {
+    pesosContainer.innerHTML = htmlPesosInputs(estado.pesosUsados, 'av-peso-serie');
+    pesosContainer.querySelectorAll('.av-peso-serie').forEach(input => {
+      input.addEventListener('input', e => {
+        estado.pesosUsados[Number(e.target.dataset.idx)] = Number(e.target.value);
+      });
+    });
+  }
+  renderPesos();
+
+  row.querySelector('.av-nome').addEventListener('input', e => { estado.nome = e.target.value; });
+  row.querySelector('.av-equip').addEventListener('input', e => { estado.equipamento = e.target.value; });
+  row.querySelector('.av-series').addEventListener('input', e => {
+    estado.series = Math.max(1, Number(e.target.value) || 1);
+    estado.pesosUsados = ajustarArrayPesos(estado.pesosUsados, estado.series);
+    renderPesos();
+  });
+  row.querySelector('.av-reps').addEventListener('input', e => { estado.reps = Number(e.target.value); });
+  row.querySelector('.btn-danger').addEventListener('click', () => {
+    avulsoExercicios.splice(idx, 1);
+    renderListaAvulso();
+  });
+
+  return row;
 }
 
 let registrarFormState = [];
@@ -394,22 +510,49 @@ function renderFormExerciciosRegistrar(config, treinoId) {
 }
 
 function salvarSessao(config, treinoId) {
-  const treino = config.treinos.find(t => t.id === treinoId);
-  if (!treino || treino.exercicios.length === 0 || registrarFormState.length === 0) return;
+  let exerciciosSessao;
+  let treinoIdSessao;
+  let treinoNomeSessao;
 
-  const exerciciosSessao = registrarFormState
-    .filter(estado => estado.realizado)
-    .map(estado => ({
-      nome: estado.nome,
-      equipamento: estado.equipamento,
-      series: estado.series,
-      reps: estado.reps,
-      pesosUsados: estado.pesosUsados
-    }));
+  if (treinoId === VALOR_AVULSO) {
+    exerciciosSessao = avulsoExercicios
+      .filter(estado => estado.nome.trim() !== '')
+      .map(estado => ({
+        nome: estado.nome,
+        equipamento: estado.equipamento,
+        series: estado.series,
+        reps: estado.reps,
+        pesosUsados: estado.pesosUsados
+      }));
 
-  if (exerciciosSessao.length === 0) {
-    alert('Marque ao menos um exercício como realizado antes de salvar.');
-    return;
+    if (exerciciosSessao.length === 0) {
+      alert('Adicione ao menos um exercício com nome antes de salvar.');
+      return;
+    }
+
+    treinoIdSessao = null;
+    treinoNomeSessao = document.getElementById('input-nome-avulso').value.trim() || 'Treino avulso';
+  } else {
+    const treino = config.treinos.find(t => t.id === treinoId);
+    if (!treino || treino.exercicios.length === 0 || registrarFormState.length === 0) return;
+
+    exerciciosSessao = registrarFormState
+      .filter(estado => estado.realizado)
+      .map(estado => ({
+        nome: estado.nome,
+        equipamento: estado.equipamento,
+        series: estado.series,
+        reps: estado.reps,
+        pesosUsados: estado.pesosUsados
+      }));
+
+    if (exerciciosSessao.length === 0) {
+      alert('Marque ao menos um exercício como realizado antes de salvar.');
+      return;
+    }
+
+    treinoIdSessao = treino.id;
+    treinoNomeSessao = treino.nome;
   }
 
   const checkAgora = document.getElementById('check-data-hoje');
@@ -424,8 +567,8 @@ function salvarSessao(config, treinoId) {
     id: uid('sess'),
     data: dataSessao,
     duracaoMinutos: duracaoMinutos,
-    treinoId: treino.id,
-    treinoNomeSnapshot: treino.nome,
+    treinoId: treinoIdSessao,
+    treinoNomeSnapshot: treinoNomeSessao,
     observacao: document.getElementById('observacao-sessao').value.trim(),
     exercicios: exerciciosSessao
   };
@@ -434,10 +577,13 @@ function salvarSessao(config, treinoId) {
 
   document.getElementById('observacao-sessao').value = '';
   document.getElementById('input-duracao').value = '';
+  document.getElementById('input-nome-avulso').value = '';
   checkAgora.checked = true;
   document.getElementById('grupo-data-especifica').classList.add('hidden');
   inputData.value = '';
   document.getElementById('msg-sessao-salva').classList.remove('hidden');
+
+  if (treinoId === VALOR_AVULSO) renderFormAvulso();
 }
 
 // ================= HISTÓRICO =================
@@ -469,11 +615,15 @@ function renderEstatisticas(sessoes) {
   const duracaoMedia = calcularDuracaoMedia(sessoes);
   const ultima = [...sessoes].sort((a, b) => new Date(b.data) - new Date(a.data))[0];
   const tempoDesde = calcularTempoDesde(ultima.data);
+  const semanal = calcularSequenciaSemanal(sessoes, getMetaSemanal());
 
   const stats = [
     { label: 'Último treino', valor: tempoDesde },
-    { label: 'Sequência atual', valor: freq.streakAtual > 0 ? `${freq.streakAtual} dias` : '—' },
-    { label: 'Maior sequência', valor: `${freq.maiorStreak} dias` },
+    { label: 'Meta semanal', valor: `${semanal.semanaAtualCount}/${semanal.meta} esta semana${semanal.semanaAtualCumprida ? ' ✅' : ''}` },
+    { label: 'Semanas seguidas na meta', valor: semanal.sequenciaAtual > 0 ? `${semanal.sequenciaAtual}` : '—' },
+    { label: 'Recorde de semanas seguidas', valor: `${semanal.maiorSequencia}` },
+    { label: 'Sequência atual (dias)', valor: freq.streakAtual > 0 ? `${freq.streakAtual} dias` : '—' },
+    { label: 'Maior sequência (dias)', valor: `${freq.maiorStreak} dias` },
     { label: `Dias treinados em ${NOMES_MESES[new Date().getMonth()]}`, valor: `${freq.diasTreinadosMes} (${freq.percentualMes}%)` },
     { label: 'Duração média', valor: duracaoMedia > 0 ? `${duracaoMedia} min` : '—' }
   ];
@@ -676,6 +826,9 @@ function criarItemSessaoView(sessoes, s, prPorSessao) {
     <div class="sessao-exercicios">${resumo}</div>
     ${s.observacao ? `<div class="obs">"${escapeAttr(s.observacao)}"</div>` : ''}
     <div class="sessao-icones">
+      <button class="btn-icone btn-icone-compartilhar btn-compartilhar-sessao" aria-label="compartilhar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+      </button>
       <button class="btn-icone btn-icone-editar btn-editar-sessao" aria-label="editar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
       </button>
@@ -684,6 +837,19 @@ function criarItemSessaoView(sessoes, s, prPorSessao) {
       </button>
     </div>
   `;
+
+  const btnCompartilhar = div.querySelector('.btn-compartilhar-sessao');
+  btnCompartilhar.addEventListener('click', async () => {
+    btnCompartilhar.disabled = true;
+    try {
+      await compartilharSessao(s, prsDaSessao);
+    } catch (err) {
+      console.error('Falha ao gerar/compartilhar imagem da sessão', err);
+      alert('Não foi possível gerar a imagem da sessão.');
+    } finally {
+      btnCompartilhar.disabled = false;
+    }
+  });
 
   div.querySelector('.btn-apagar-sessao').addEventListener('click', () => {
     if (!confirm('Apagar essa sessão do histórico? Não tem como desfazer.')) return;

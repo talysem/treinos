@@ -475,6 +475,11 @@ select.reg-realizado {
   cursor: pointer;
 }
 
+.btn-icone-compartilhar {
+  background: var(--primary);
+  color: #000000;
+}
+
 .btn-icone-editar {
   background: #ffffff;
   color: #000000;
@@ -483,6 +488,11 @@ select.reg-realizado {
 .btn-icone-apagar {
   background: var(--danger);
   color: #ffffff;
+}
+
+.btn-icone:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .exercicio-resumo-linha {

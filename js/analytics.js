@@ -19,10 +19,13 @@ function calcularRecordes(sessoes) {
     const marcados = new Set();
     s.exercicios.forEach(ex => {
       if (!ex.pesosUsados || ex.pesosUsados.length === 0) return;
-      const maxSessao = Math.max(...ex.pesosUsados);
+      const minSessao = Math.min(...ex.pesosUsados); // série mais fraca da sessão — só ela garante o patamar em todas
       const atual = recordes[ex.nome];
-      if (!atual || maxSessao > atual.peso) {
-        recordes[ex.nome] = { peso: maxSessao, data: s.data, sessaoId: s.id };
+      if (!atual) {
+        // primeiro registro: só define a base de comparação, não é um recorde superado
+        recordes[ex.nome] = { peso: minSessao, data: s.data, sessaoId: s.id };
+      } else if (minSessao > atual.peso) {
+        recordes[ex.nome] = { peso: minSessao, data: s.data, sessaoId: s.id };
         marcados.add(ex.nome);
       }
     });
@@ -135,7 +138,8 @@ function calcularSequenciaSemanal(sessoes, meta) {
 function calcularDistribuicaoTreino(sessoes) {
   const contagem = {};
   sessoes.forEach(s => {
-    contagem[s.treinoNomeSnapshot] = (contagem[s.treinoNomeSnapshot] || 0) + 1;
+    const chave = s.treinoId ? s.treinoNomeSnapshot : 'Sem grupo';
+    contagem[chave] = (contagem[chave] || 0) + 1;
   });
   return contagem;
 }

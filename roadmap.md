@@ -2,10 +2,15 @@
 
 Ações futuras planejadas, fora do escopo já implementado.
 
+## Resolvidos
+
+### ~~Corrigir z-index do menu e switches~~ ✅
+Resolvido: `.tabs` estava sem `z-index`, ficando atrás de outros elementos empilhados. Adicionado `z-index: 1000;` na regra `.tabs`.
+
 ## Bugs / ajustes técnicos
 
-### Corrigir z-index do menu e switches
-O menu inferior (`.tabs`) usa `position: fixed` com `backdrop-filter`, e os switches (`.switch-input`) usam elementos sobrepostos (input + div + svg). Existe conflito de empilhamento em pelo menos um desses casos — mapear onde exatamente o z-index está furando (provavelmente overlay do modo foco, ou o menu ficando atrás de algum card) e corrigir com uma escala de z-index consistente em vez de valores soltos.
+### Verificar z-index dos switches
+O item original também suspeitava de conflito de empilhamento nos switches (`.switch-input`, elementos sobrepostos: input + div + svg). O menu (`.tabs`) já foi corrigido; os switches ainda não foram confirmados como problema real — só investigar se aparecer um caso concreto.
 
 ## Novas funcionalidades
 

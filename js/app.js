@@ -8,6 +8,39 @@ function htmlPesosInputs(pesosArray, className) {
   `).join('');
 }
 
+// Renderiza os inputs de peso por série, ou um único input aplicado a todas as séries
+// quando o checkbox "Peso único" está marcado. `estado.pesosUsados` é mutado in-place.
+function renderBlocoPesos(pesosContainer, chkPesoUnico, estado, className) {
+  function render() {
+    if (chkPesoUnico.checked) {
+      const valorAtual = estado.pesosUsados[0] || 0;
+      pesosContainer.innerHTML = `
+        <div class="peso-serie-item">
+          <label>Peso (todas as séries)</label>
+          <input type="number" min="0" step="0.5" value="${valorAtual}" class="${className}-unico">
+        </div>
+      `;
+      pesosContainer.querySelector(`.${className}-unico`).addEventListener('input', e => {
+        const valor = Number(e.target.value);
+        estado.pesosUsados = estado.pesosUsados.map(() => valor);
+      });
+    } else {
+      pesosContainer.innerHTML = htmlPesosInputs(estado.pesosUsados, className);
+      pesosContainer.querySelectorAll(`.${className}`).forEach(input => {
+        input.addEventListener('input', e => {
+          estado.pesosUsados[Number(e.target.dataset.idx)] = Number(e.target.value);
+        });
+      });
+    }
+  }
+
+  if (!chkPesoUnico.dataset.wired) {
+    chkPesoUnico.addEventListener('change', render);
+    chkPesoUnico.dataset.wired = '1';
+  }
+  render();
+}
+
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -75,6 +108,42 @@ function aplicarCorPrimaria(cor) {
     inputMeta.value = valor;
     saveMetaSemanal(valor);
   });
+})();
+
+(function inicializarConfirmacoes() {
+  const input = document.getElementById('input-confirmacoes-ativas');
+  if (!input) return;
+
+  input.checked = getConfirmacoesAtivas();
+  input.addEventListener('change', () => saveConfirmacoesAtivas(input.checked));
+})();
+
+(function inicializarConfigGrafico() {
+  const inputMax = document.getElementById('input-grafico-max-pontos');
+  const inputMin = document.getElementById('input-grafico-min-registros');
+  if (!inputMax || !inputMin) return;
+
+  inputMax.value = getGraficoMaxPontos();
+  inputMin.value = getGraficoMinRegistros();
+
+  inputMax.addEventListener('change', () => {
+    const valor = Math.max(2, Number(inputMax.value) || 2);
+    inputMax.value = valor;
+    saveGraficoMaxPontos(valor);
+  });
+  inputMin.addEventListener('change', () => {
+    const valor = Math.max(2, Number(inputMin.value) || 2);
+    inputMin.value = valor;
+    saveGraficoMinRegistros(valor);
+  });
+})();
+
+(function inicializarShareAspecto() {
+  const select = document.getElementById('input-share-aspecto');
+  if (!select) return;
+
+  select.value = getShareAspecto();
+  select.addEventListener('change', () => saveShareAspecto(select.value));
 })();
 
 // ================= TREINOS =================
@@ -153,7 +222,7 @@ function criarCardTreinoView(treino, recordes, ultimoPorTipo) {
   });
 
   card.querySelector('.btn-excluir-treino').addEventListener('click', () => {
-    if (!confirm(`Excluir "${treino.nome}"? Isso remove o treino, mas o histórico de sessões já registradas continua intacto.`)) return;
+    if (!confirmarSeAtivo(`Excluir "${treino.nome}"? Isso remove o treino, mas o histórico de sessões já registradas continua intacto.`)) return;
     const config = getConfig();
     const idx = config.treinos.findIndex(t => t.id === treino.id);
     config.treinos.splice(idx, 1);
@@ -386,20 +455,20 @@ function criarLinhaExercicioAvulso(estado, idx) {
         <input type="number" min="1" value="${estado.reps}" class="av-reps">
       </div>
     </div>
-    <label>Pesos usados:</label>
+    <div class="row-between full-width">
+      <label>Pesos usados:</label>
+      <label class="checkbox-label-inline">
+        <input type="checkbox" class="chk-peso-unico">
+        Peso único
+      </label>
+    </div>
     <div class="pesos-serie-row"></div>
   `;
 
   const pesosContainer = row.querySelector('.pesos-serie-row');
+  const chkPesoUnico = row.querySelector('.chk-peso-unico');
 
-  function renderPesos() {
-    pesosContainer.innerHTML = htmlPesosInputs(estado.pesosUsados, 'av-peso-serie');
-    pesosContainer.querySelectorAll('.av-peso-serie').forEach(input => {
-      input.addEventListener('input', e => {
-        estado.pesosUsados[Number(e.target.dataset.idx)] = Number(e.target.value);
-      });
-    });
-  }
+  const renderPesos = () => renderBlocoPesos(pesosContainer, chkPesoUnico, estado, 'av-peso-serie');
   renderPesos();
 
   row.querySelector('.av-nome').addEventListener('input', e => { estado.nome = e.target.value; });
@@ -472,22 +541,22 @@ function renderFormExerciciosRegistrar(config, treinoId) {
             <input type="number" min="1" value="${estado.reps}" class="reg-reps">
           </div>
         </div>
-        <label>Pesos usados:</label>
+        <div class="row-between full-width">
+          <label>Pesos usados:</label>
+          <label class="checkbox-label-inline">
+            <input type="checkbox" class="chk-peso-unico">
+            Peso único
+          </label>
+        </div>
         <div class="pesos-serie-row"></div>
       </div>
     `;
 
     const camposRealizado = row.querySelector('.campos-realizado');
     const pesosContainer = row.querySelector('.pesos-serie-row');
+    const chkPesoUnico = row.querySelector('.chk-peso-unico');
 
-    function renderPesosUsados() {
-      pesosContainer.innerHTML = htmlPesosInputs(estado.pesosUsados, 'reg-peso-serie');
-      pesosContainer.querySelectorAll('.reg-peso-serie').forEach(input => {
-        input.addEventListener('input', e => {
-          estado.pesosUsados[Number(e.target.dataset.idx)] = Number(e.target.value);
-        });
-      });
-    }
+    const renderPesosUsados = () => renderBlocoPesos(pesosContainer, chkPesoUnico, estado, 'reg-peso-serie');
     renderPesosUsados();
 
     row.querySelector('.reg-realizado').addEventListener('change', e => {
@@ -600,7 +669,33 @@ function renderHistorico() {
     renderFiltroExercicio(sessoes);
   }
 
+  renderFiltroTreinoHistorico(sessoes);
   renderListaSessoes(sessoes);
+}
+
+function nomeGrupoSessao(s) {
+  return s.treinoId ? s.treinoNomeSnapshot : 'Sem grupo';
+}
+
+function renderFiltroTreinoHistorico(sessoes) {
+  const select = document.getElementById('filtro-treino-historico');
+
+  if (sessoes.length === 0) {
+    select.innerHTML = '';
+    select.classList.add('hidden');
+    return;
+  }
+  select.classList.remove('hidden');
+
+  const nomesUnicos = [...new Set(sessoes.map(nomeGrupoSessao))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const atual = select.value;
+
+  select.innerHTML = '<option value="">Todos os treinos</option>' +
+    nomesUnicos.map(n => `<option value="${escapeAttr(n)}">${n}</option>`).join('');
+
+  if (nomesUnicos.includes(atual)) select.value = atual;
+
+  select.onchange = () => renderListaSessoes(sessoes);
 }
 
 function renderEstatisticas(sessoes) {
@@ -717,8 +812,9 @@ function renderFiltroExercicio(sessoes) {
     });
   });
 
+  const minRegistros = getGraficoMinRegistros();
   const nomesComDadosSuficientes = Object.keys(contagemPorExercicio)
-    .filter(nome => contagemPorExercicio[nome] >= 2)
+    .filter(nome => contagemPorExercicio[nome] >= minRegistros)
     .sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
   const card = document.getElementById('card-progressao');
@@ -755,7 +851,7 @@ function atualizarGrafico(sessoes, nomeExercicio) {
       return { data: s.data, peso: Math.max(...ex.pesosUsados) };
     })
     .sort((a, b) => new Date(a.data) - new Date(b.data))
-    .slice(-5);
+    .slice(-getGraficoMaxPontos());
 
   const temDadosSuficientes = pontos.length >= 2;
   canvas.classList.toggle('hidden', !temDadosSuficientes);
@@ -788,8 +884,16 @@ function renderListaSessoes(sessoes) {
     return;
   }
 
-  const ordenadas = [...sessoes].sort((a, b) => new Date(b.data) - new Date(a.data));
+  const filtroTreino = document.getElementById('filtro-treino-historico').value;
+  const filtradas = filtroTreino ? sessoes.filter(s => nomeGrupoSessao(s) === filtroTreino) : sessoes;
+
+  const ordenadas = [...filtradas].sort((a, b) => new Date(b.data) - new Date(a.data));
   const { prPorSessao } = calcularRecordes(sessoes);
+
+  if (ordenadas.length === 0) {
+    container.innerHTML = '<p class="hint">Nenhuma sessão para esse filtro.</p>';
+    return;
+  }
 
   ordenadas.forEach(s => {
     container.appendChild(criarItemSessaoView(sessoes, s, prPorSessao));
@@ -852,7 +956,7 @@ function criarItemSessaoView(sessoes, s, prPorSessao) {
   });
 
   div.querySelector('.btn-apagar-sessao').addEventListener('click', () => {
-    if (!confirm('Apagar essa sessão do histórico? Não tem como desfazer.')) return;
+    if (!confirmarSeAtivo('Apagar essa sessão do histórico? Não tem como desfazer.')) return;
     const idx = sessoes.findIndex(x => x.id === s.id);
     sessoes.splice(idx, 1);
     saveHistorico(sessoes);

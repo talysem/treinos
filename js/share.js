@@ -18,7 +18,7 @@ async function gerarImagemSessao(sessao, prsDaSessao) {
   await document.fonts.ready;
 
   const W = 1080;
-  const H = 1440;
+  const H = getShareAspecto() === '9x16' ? 1920 : 1440;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;

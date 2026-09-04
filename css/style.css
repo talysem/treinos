@@ -339,6 +339,19 @@ input[type="datetime-local"] {
   width: auto;
 }
 
+.checkbox-label-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.checkbox-label-inline input[type="checkbox"] {
+  width: auto;
+}
+
 .exercicio-nao-realizado {
   opacity: 0.5;
 }

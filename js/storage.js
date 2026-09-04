@@ -25,6 +25,54 @@ function saveMetaSemanal(valor) {
   localStorage.setItem(KEY_META_SEMANAL, String(valor));
 }
 
+const KEY_CONFIRMACOES = 'confirmacoes_ativas';
+
+function getConfirmacoesAtivas() {
+  const valor = localStorage.getItem(KEY_CONFIRMACOES);
+  return valor === null ? true : valor === 'true';
+}
+
+function saveConfirmacoesAtivas(ativo) {
+  localStorage.setItem(KEY_CONFIRMACOES, String(ativo));
+}
+
+// Antes de uma ação destrutiva (apagar sessão/treino): pede confirmação só se a preferência estiver ligada.
+function confirmarSeAtivo(mensagem) {
+  return getConfirmacoesAtivas() ? confirm(mensagem) : true;
+}
+
+const KEY_GRAFICO_MAX_PONTOS = 'grafico_max_pontos';
+const KEY_GRAFICO_MIN_REGISTROS = 'grafico_min_registros';
+
+function getGraficoMaxPontos() {
+  const valor = Number(localStorage.getItem(KEY_GRAFICO_MAX_PONTOS));
+  return valor > 0 ? valor : 5;
+}
+
+function saveGraficoMaxPontos(valor) {
+  localStorage.setItem(KEY_GRAFICO_MAX_PONTOS, String(valor));
+}
+
+function getGraficoMinRegistros() {
+  const valor = Number(localStorage.getItem(KEY_GRAFICO_MIN_REGISTROS));
+  return valor >= 2 ? valor : 2;
+}
+
+function saveGraficoMinRegistros(valor) {
+  localStorage.setItem(KEY_GRAFICO_MIN_REGISTROS, String(valor));
+}
+
+const KEY_SHARE_ASPECTO = 'share_aspecto';
+
+function getShareAspecto() {
+  const valor = localStorage.getItem(KEY_SHARE_ASPECTO);
+  return valor === '9x16' ? '9x16' : '3x4';
+}
+
+function saveShareAspecto(valor) {
+  localStorage.setItem(KEY_SHARE_ASPECTO, valor);
+}
+
 function uid(prefix) {
   return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
@@ -141,6 +189,10 @@ function exportarDados() {
     historico_sessoes: getHistorico(),
     cor_primaria: getCorPrimaria(),
     meta_semanal: getMetaSemanal(),
+    confirmacoes_ativas: getConfirmacoesAtivas(),
+    grafico_max_pontos: getGraficoMaxPontos(),
+    grafico_min_registros: getGraficoMinRegistros(),
+    share_aspecto: getShareAspecto(),
     exportadoEm: new Date().toISOString()
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -161,6 +213,10 @@ function importarDados(file, onDone) {
       if (data.historico_sessoes) saveHistorico(data.historico_sessoes);
       if (data.cor_primaria) saveCorPrimaria(data.cor_primaria);
       if (data.meta_semanal) saveMetaSemanal(data.meta_semanal);
+      if (data.confirmacoes_ativas !== undefined) saveConfirmacoesAtivas(data.confirmacoes_ativas);
+      if (data.grafico_max_pontos) saveGraficoMaxPontos(data.grafico_max_pontos);
+      if (data.grafico_min_registros) saveGraficoMinRegistros(data.grafico_min_registros);
+      if (data.share_aspecto) saveShareAspecto(data.share_aspecto);
       onDone(true);
     } catch (err) {
       console.error('Falha ao importar', err);

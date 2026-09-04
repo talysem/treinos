@@ -83,6 +83,7 @@
           </label>
         </div>
       </div>
+      <select id="filtro-treino-historico"></select>
       <div id="lista-sessoes"></div>
     </div>
   </section>
@@ -189,6 +190,28 @@
     <div class="card">
       <label>Meta semanal de treinos</label>
       <input type="number" id="input-meta-semanal" min="1" placeholder="Ex.: 3">
+    </div>
+
+    <div class="card">
+      <label class="checkbox-label">
+        <input type="checkbox" id="input-confirmacoes-ativas">
+        Pedir confirmação antes de apagar sessão ou treino
+      </label>
+    </div>
+
+    <div class="card">
+      <label>Registros no gráfico de progressão</label>
+      <input type="number" id="input-grafico-max-pontos" min="2" placeholder="Ex.: 5">
+      <label>Mínimo de registros pra um exercício aparecer no filtro</label>
+      <input type="number" id="input-grafico-min-registros" min="2" placeholder="Ex.: 2">
+    </div>
+
+    <div class="card">
+      <label>Formato da imagem de compartilhar</label>
+      <select id="input-share-aspecto">
+        <option value="3x4">3:4 (post)</option>
+        <option value="9x16">9:16 (stories)</option>
+      </select>
     </div>
   </section>
 
